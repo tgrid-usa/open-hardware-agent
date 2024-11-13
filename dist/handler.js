@@ -9,14 +9,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stopAgent = exports.proofAcceptedListener = exports.sendProofRequest = exports.getClaimList = exports.createClaim = exports.getIssuedCredentialById = exports.getIssuedCredential = exports.rejectProofRequest = exports.getRequestedAttributes = exports.selectCredentialsForRequest = exports.acceptProofRequest = exports.proofRequestListener = exports.getProofRecord = exports.acceptOffer = exports.setupCredentialListener = exports.findPresentationById = exports.proofRequestList = exports.getDids = exports.deleteConnectionById = exports.getConnectionById = exports.getAllConnections = exports.getConnectionRecord = exports.receiveInvitation = exports.createNewInvitation = void 0;
+exports.createSchema = exports.setIssuerConfig = exports.getAgentInfo = exports.stopAgent = exports.proofAcceptedListener = exports.sendProofRequest = exports.getClaimList = exports.createClaim = exports.setupMessageListener = exports.getMessageByThreadId = exports.sendMessage = exports.getIssuedCredentialById = exports.getIssuedCredential = exports.rejectProofRequest = exports.getRequestedAttributes = exports.selectCredentialsForRequest = exports.acceptProofRequest = exports.proofRequestListener = exports.getProofRecord = exports.acceptOffer = exports.setupCredentialListener = exports.findPresentationById = exports.proofRequestList = exports.getDids = exports.deleteConnectionById = exports.getConnectionById = exports.getAllConnections = exports.getConnectionRecord = exports.receiveInvitation = exports.createNewInvitation = void 0;
 const core_1 = require("@aries-framework/core");
+require('dotenv').config();
+const domain = process.env.DOMAIN;
 const createNewInvitation = (agent) => __awaiter(void 0, void 0, void 0, function* () {
     const goutOfBandRecord = yield agent.oob.createInvitation({ multiUseInvitation: true });
     let outOfBandId = goutOfBandRecord.id;
     setupConnectionListener(agent, outOfBandId, (agent_lable) => console.log(`We now have an active connection for outOfBandId:${outOfBandId} with ${agent_lable} agent`));
     return {
-        invitationUrl: goutOfBandRecord.outOfBandInvitation.toUrl({ domain: 'https://example.org' }),
+        invitationUrl: goutOfBandRecord.outOfBandInvitation.toUrl({ domain: domain }),
         outOfBandId: goutOfBandRecord.id
     };
 });
@@ -209,6 +211,28 @@ const getIssuedCredentialById = (agent, recordId) => __awaiter(void 0, void 0, v
     return context;
 });
 exports.getIssuedCredentialById = getIssuedCredentialById;
+const sendMessage = (agent, connID, message) => __awaiter(void 0, void 0, void 0, function* () {
+    const context = agent.basicMessages.sendMessage(connID, message);
+    return context;
+});
+exports.sendMessage = sendMessage;
+const getMessageByThreadId = (agent, threadId) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = agent.basicMessages.getByThreadId(threadId);
+    return result;
+});
+exports.getMessageByThreadId = getMessageByThreadId;
+const setupMessageListener = (agent) => __awaiter(void 0, void 0, void 0, function* () {
+    // let message:any = {};
+    const getMessage = (message) => { return message; };
+    agent.events.on(core_1.BasicMessageEventTypes.BasicMessageStateChanged, ({ payload }) => {
+        if (payload.basicMessageRecord.role === core_1.BasicMessageRole.Receiver) {
+            const messageData = payload.message.content;
+            console.log("message data", messageData);
+            getMessage(messageData);
+        }
+    });
+});
+exports.setupMessageListener = setupMessageListener;
 // ==== Verifier flow ===
 // generate proofAttributes
 const proofAttributes = (attributes, credDefId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -291,3 +315,42 @@ const stopAgent = (agent) => __awaiter(void 0, void 0, void 0, function* () {
     return result;
 });
 exports.stopAgent = stopAgent;
+const getAgentInfo = (agent) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = agent.config;
+    return result;
+});
+exports.getAgentInfo = getAgentInfo;
+let seedValue;
+let indyDid;
+//setNetworkConfig
+const setIssuerConfig = (seed, unqualifiedIndyDid) => __awaiter(void 0, void 0, void 0, function* () {
+    // seedValue = TypedArrayEncoder.fromString(seed) // What you input on bcovrin. Should be kept secure in production!
+    seedValue = seed; // What you input on bcovrin. Should be kept secure in production!
+    // unqualifiedIndyDid = `WEe8cTdg7cwxRoH8J4YVre` // will be returned after registering seed on bcovrin
+    indyDid = `did:indy:trustgrid_net:test:${unqualifiedIndyDid}`; // this will be connection string for indy Network for this agent only.
+    return { seedValue, indyDid };
+});
+exports.setIssuerConfig = setIssuerConfig;
+// create schema - function
+const createSchema = (agent, name, version, attrNames) => __awaiter(void 0, void 0, void 0, function* () {
+    // Register schema
+    // console.log("Agent => ",agent);
+    // attrNames: ['name','age','dob','issue-date','valid-till']
+    const schemaResult = yield agent.modules.anoncreds.registerSchema({
+        schema: {
+            name,
+            version,
+            issuerId: indyDid,
+            attrNames: attrNames,
+        },
+        options: {},
+    });
+    if (schemaResult.schemaState.state === 'failed') {
+        console.log(`Error creating schema: ${schemaResult.schemaState.reason}`);
+        return false;
+    }
+    console.log("schema result => ", schemaResult);
+    const schemaId = `${schemaResult.schemaState.schemaId}`;
+    return schemaId;
+});
+exports.createSchema = createSchema;

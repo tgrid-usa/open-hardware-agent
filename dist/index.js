@@ -16,8 +16,9 @@ const express_1 = __importDefault(require("express"));
 const agent_1 = require("./agent");
 const handler_1 = require("./handler");
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3002;
+require('dotenv').config();
 app.use(express_1.default.json());
+const port = process.env.PORT || 3002;
 let agent;
 app.get('/stopAgent', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -41,7 +42,8 @@ app.post('/createDID', (req, res) => __awaiter(void 0, void 0, void 0, function*
     };
     // const apiUrl = "http://test.bcovrin.vonx.io/register";
     // const apiUrl = "http://4.194.26.38:9000/register";
-    const apiUrl = "https://tgrid-network.uat.trustgrid.com/register";
+    //   const apiUrl = "https://tgrid-network.uat.trustgrid.com/register";
+    const apiUrl = "https://tgridnetwork.dev.trustgrid.com/register";
     fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -347,6 +349,77 @@ app.get('/proofRequestList', (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
     catch (error) {
         console.error('Error in /getDids:', error);
+        res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
+    }
+}));
+// get all sendMessage
+app.post('/sendMessage', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { connId, message } = req.body;
+        const result = yield (0, handler_1.sendMessage)(agent, connId, message);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.error('Error in /sendMessage:', error);
+        res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
+    }
+}));
+// getMessageByThreadId
+app.post('/getMessageByThreadId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { threadId } = req.body;
+        const result = yield (0, handler_1.getMessageByThreadId)(agent, threadId);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.error('Error in /getMessageByThreadId:', error);
+        res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
+    }
+}));
+// setupMessageListener
+app.post('/setupMessageListener', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, handler_1.setupMessageListener)(agent);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.error('Error in /setupMessageListener:', error);
+        res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
+    }
+}));
+// Root endpoint - get
+app.get('/agent-info', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, handler_1.getAgentInfo)(agent);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}));
+// set did config
+app.post('/setConfig', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { seed, did } = req.body;
+        const result = yield (0, handler_1.setIssuerConfig)(seed, did);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.error('Error in /setConfig:', error);
+        res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
+    }
+}));
+//create schema
+app.post('/createSchema', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // attrNames: ['name','age','dob','issue-date','valid-till']
+        const { name, version, attributes } = req.body;
+        const result = yield (0, handler_1.createSchema)(agent, name, version, attributes);
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        console.error('Error in /createSchema:', error);
         res.status(500).json({ success: false, error: `Internal Server Error: ${error}` });
     }
 }));
