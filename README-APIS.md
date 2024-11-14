@@ -54,3 +54,35 @@ response: { "success": true, "result": { "_tags": {}, "metadata": {}, "id": "137
 
 ### getMessageByThreadId
 response: { "success": true, "result": { "_tags": { "connectionId": "06e16577-888b-4990-863a-81d5a60cf600", "role": "sender", "threadId": "be715b82-851c-4fe6-816d-a6d5d65b05b6" }, "metadata": {}, "id": "137730f2-0708-4907-932d-b1108f63b160", "createdAt": "2024-09-23T10:59:42.119Z", "content": "yes verifier all good", "sentTime": "2024-09-23T10:59:42.119Z", "connectionId": "06e16577-888b-4990-863a-81d5a60cf600", "role": "sender", "threadId": "be715b82-851c-4fe6-816d-a6d5d65b05b6", "updatedAt": "2024-09-23T10:59:42.120Z" } }
+
+============
+
+## status health
+
+get - '/'
+
+## init:
+
+post api: {{local}}/initializeAgent
+{
+    "label": "Holder-cloud8",
+    "walletConfig": {
+      "id": "holder-cloud8",
+      "key": "password#123"
+    },
+    "endpoints": ["http://4.194.26.38:4005"]
+  }
+
+## recive invite - post
+
+createNewInvitation 
+{}
+
+## get all connection 
+
+get - getAllConnections
+
+
+## get issued credential 
+
+get - getIssuedCredential
